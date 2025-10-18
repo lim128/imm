@@ -14,5 +14,8 @@
 #sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
 
 # Add a feed source
-echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
+#echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
 #echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
+git clone -b beta --single-branch https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
+git clone -b v5 --single-branch https://github.com/sbwml/luci-app-mosdns.git package/luci-app-mosdns
+git clone -b v5 --single-branch https://github.com/sbwml/openwrt_helloworld.git package/helloworld && rm -rf package/helloworld/luci-app-homeproxy
