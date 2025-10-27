@@ -137,10 +137,10 @@ jobs:
         fi
         
         # 压缩 aarch64_generic 目录的内容到 app.tar.gz
-        (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz .)
+        (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
         
         # 压缩 armv8 目录的内容到 r3s.tar.gz
-        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz .)
+        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz *)
         
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
         echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
@@ -168,7 +168,7 @@ jobs:
         - 设备: r3s
         - 源码: ${{ env.REPO_URL }}
         - 分支: ${{ env.REPO_BRANCH }}
-        - **app.tar.gz**: 内含aarch64_generic架构软件包
+        - **app.tar.gz**: aarch64_generic架构软件包
         - **r3s.tar.gz**: 内含r3s固件文件，用于刷机
         EOF
         
