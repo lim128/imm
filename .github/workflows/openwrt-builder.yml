@@ -124,43 +124,12 @@ jobs:
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
         cd openwrt
-        
-        # 检测目录
-        if [ ! -d "bin/packages/aarch64_generic" ]; then
-          echo "错误: bin/packages/aarch64_generic 目录不存在"
-          exit 1
-        fi
-        
-        if [ ! -d "bin/targets/rockchip/armv8" ]; then
-          echo "错误: bin/targets/rockchip/armv8 目录不存在"
-          exit 1
-        fi
-        
-        # 压缩 aarch64_generic 目录的内容到 app.tar.gz
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
-        
-        # 处理 armv8 目录
-        cd bin/targets/rockchip/armv8
-        
-        # 移动固件镜像文件到上级目录
-        FIRMWARE_FILE="immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz"
-        if [ -f "$FIRMWARE_FILE" ]; then
-          mv "$FIRMWARE_FILE" ../../
-          echo "FIRMWARE_FILE=$PWD/../../$FIRMWARE_FILE" >> $GITHUB_ENV
-        else
-          echo "错误: 固件文件 $FIRMWARE_FILE 不存在"
-          exit 1
-        fi
-        
-        # 压缩剩余文件到 r3s.tar.gz
-        tar -czf ../../../../r3s.tar.gz *
-        
-        # 回到 openwrt 目录
-        cd ../../..
-        
+        mv bin/targets/rockchip/armv8/immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz ../
+        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz *)
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
         echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
-        
+        echo "FIRMWARE_FILE=$PWD/immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传压缩文件
@@ -178,17 +147,13 @@ jobs:
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-        
-        # 创建release说明文件
         cat > release.txt << 'EOF'
-        # 固件编译结果
         - 设备: r3s
         - 源码: ${{ env.REPO_URL }}
         - 分支: ${{ env.REPO_BRANCH }}
         - **app.tar.gz**: aarch64_generic架构软件包
-        - **r3s.tar.gz**: 固件外的其他文件
+        - **r3s.tar.gz**: 其他固件文件
         EOF
-        
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传到release
