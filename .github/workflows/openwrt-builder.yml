@@ -125,7 +125,7 @@ jobs:
       run: |
         cd openwrt
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
-        mv bin/targets/rockchip/armv8/immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz ../
+        mv bin/targets/rockchip/armv8/immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz ./
         (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz *)
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
         echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
