@@ -148,7 +148,7 @@ jobs:
         - 设备: r3s
         - 源码: ${{ env.REPO_URL }}
         - 分支: ${{ env.REPO_BRANCH }}
-        - **app.tar.gz**: 插件包
+        - **app.tar.gz**: aarch64_generic架构软件包
         EOF
         echo "status=success" >> $GITHUB_OUTPUT
 
