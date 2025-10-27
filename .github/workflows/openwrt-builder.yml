@@ -125,11 +125,9 @@ jobs:
       run: |
         cd openwrt
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
-        mv bin/targets/rockchip/armv8/immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz ./
-        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz *)
+        (cd bin/targets/rockchip/armv8 && rm -rf packages)
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
-        echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
-        echo "FIRMWARE_FILE=$PWD/immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz" >> $GITHUB_ENV
+        echo "FIRMWARE_FILE=$PWD/bin/targets/*/*" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传压缩文件
@@ -139,7 +137,6 @@ jobs:
         name: OpenWrt_compressed${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: |
           ${{ env.PACKAGES_FILE }}
-          ${{ env.TARGETS_FILE }}
           ${{ env.FIRMWARE_FILE }}
 
     - name: 生成标签和信息
@@ -151,8 +148,7 @@ jobs:
         - 设备: r3s
         - 源码: ${{ env.REPO_URL }}
         - 分支: ${{ env.REPO_BRANCH }}
-        - **app.tar.gz**: aarch64_generic架构软件包
-        - **r3s.tar.gz**: 其他固件文件
+        - **app.tar.gz**: 插件包
         EOF
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -166,7 +162,6 @@ jobs:
         body_path: release.txt
         files: |
           ${{ env.PACKAGES_FILE }}
-          ${{ env.TARGETS_FILE }}
           ${{ env.FIRMWARE_FILE }}
 
     - name: 删除旧工作流
