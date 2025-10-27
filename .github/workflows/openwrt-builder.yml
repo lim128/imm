@@ -136,11 +136,15 @@ jobs:
           exit 1
         fi
         
-        # 压缩 aarch64_generic 目录的内容到 app.tar.gz
+        # 压缩aarch64_generic目录的内容到 app.tar.gz
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
         
-        # 压缩 armv8 目录的内容到 r3s.tar.gz
-        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz *)
+        # 压缩armv8目录下除.img.gz外的所有内容到r3s.tar.gz
+        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz --exclude='*.img.gz' .)
+        
+        # 查找所有的.img.gz 文件
+        IMG_FILES=$(find bin/targets/rockchip/armv8 -name "*.img.gz")
+        echo "IMG_FILES=$IMG_FILES" >> $GITHUB_ENV
         
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
         echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
@@ -155,6 +159,7 @@ jobs:
         path: |
           ${{ env.PACKAGES_FILE }}
           ${{ env.TARGETS_FILE }}
+          ${{ env.IMG_FILES }}
 
     - name: 生成标签和信息
       id: tag
@@ -169,7 +174,7 @@ jobs:
         - 源码: ${{ env.REPO_URL }}
         - 分支: ${{ env.REPO_BRANCH }}
         - **app.tar.gz**: aarch64_generic架构软件包
-        - **r3s.tar.gz**: 内含r3s固件文件，用于刷机
+        - **r3s.tar.gz**: 编译后除固件外相关文件
         EOF
         
         echo "status=success" >> $GITHUB_OUTPUT
@@ -185,6 +190,7 @@ jobs:
         files: |
           ${{ env.PACKAGES_FILE }}
           ${{ env.TARGETS_FILE }}
+          ${{ env.IMG_FILES }}
 
     - name: 删除旧工作流
       uses: Mattraks/delete-workflow-runs@main
