@@ -119,83 +119,78 @@ jobs:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
-- name: 整理和压缩文件
-  id: organize
-  if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-  run: |
-    cd openwrt
-    
-    # 检测目录是否存在
-    if [ ! -d "bin/packages/aarch64_generic" ]; then
-      echo "错误: bin/packages/aarch64_generic 目录不存在"
-      exit 1
-    fi
-    
-    if [ ! -d "bin/targets/rockchip/armv8" ]; then
-      echo "错误: bin/targets/rockchip/armv8 目录不存在"
-      exit 1
-    fi
-    
-    # 压缩 aarch64_generic 目录的内容到 app.tar.gz
-    (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
-    
-    # 压缩 armv8 目录下除 *.img.gz 外的所有内容到 r3s.tar.gz
-    (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz --exclude='*.img.gz' *)
-    
-    # 查找所有的 *.img.gz 文件，防止空结果导致错误
-    IMG_FILES=$(find bin/targets/rockchip/armv8 -name "*.img.gz" || true)
-    if [ -z "$IMG_FILES" ]; then
-      echo "警告: 未找到 *.img.gz 文件"
-    fi
-    echo "IMG_FILES=$IMG_FILES" >> $GITHUB_ENV
-    
-    # 设置环境变量
-    echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
-    echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
-    
-    echo "status=success" >> $GITHUB_OUTPUT
+    - name: 整理和压缩文件
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt
+        
+        # 检测目录
+        if [ ! -d "bin/packages/aarch64_generic" ]; then
+          echo "错误: bin/packages/aarch64_generic 目录不存在"
+          exit 1
+        fi
+        
+        if [ ! -d "bin/targets/rockchip/armv8" ]; then
+          echo "错误: bin/targets/rockchip/armv8 目录不存在"
+          exit 1
+        fi
+        
+        # 压缩 aarch64_generic 目录的内容到 app.tar.gz
+        (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
+        
+        # 压缩 armv8 目录下除 .img.gz 外的所有内容到 r3s.tar.gz
+        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz --exclude='*.img.gz' *)
+        
+        # 查找所有的 .img.gz 文件
+        IMG_FILES=$(find bin/targets/rockchip/armv8 -name "*.img.gz")
+        echo "IMG_FILES=$IMG_FILES" >> $GITHUB_ENV
+        
+        echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
+        echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
+        
+        echo "status=success" >> $GITHUB_OUTPUT
 
-- name: 上传压缩文件
-  uses: actions/upload-artifact@main
-  if: steps.organize.outputs.status == 'success' && !cancelled()
-  with:
-    name: OpenWrt_compressed${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-    path: |
-      ${{ env.PACKAGES_FILE }}
-      ${{ env.TARGETS_FILE }}
-      ${{ env.IMG_FILES }}
+    - name: 上传压缩文件
+      uses: actions/upload-artifact@main
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_compressed${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: |
+          ${{ env.PACKAGES_FILE }}
+          ${{ env.TARGETS_FILE }}
+          ${{ env.IMG_FILES }}
 
-- name: 生成标签和信息
-  id: tag
-  if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-  run: |
-    echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-    
-    # 创建 release 说明文件
-    cat > release.txt << 'EOF'
-    # 固件编译结果
-    - 设备: r3s
-    - 源码: ${{ env.REPO_URL }}
-    - 分支: ${{ env.REPO_BRANCH }}
-    - **app.tar.gz**: aarch64_generic 架构软件包
-    - **r3s.tar.gz**: 编译后除固件镜像外的相关文件
-    - ***.img.gz**: r3s 固件镜像文件，用于刷机（若存在）
-    EOF
-    
-    echo "status=success" >> $GITHUB_OUTPUT
+    - name: 生成标签和信息
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+        
+        # 创建release说明文件
+        cat > release.txt << 'EOF'
+        # 固件编译结果
+        - 设备: r3s
+        - 源码: ${{ env.REPO_URL }}
+        - 分支: ${{ env.REPO_BRANCH }}
+        - **app.tar.gz**: aarch64_generic架构软件包
+        - **r3s.tar.gz**: 除固件文件img.gz外相关文件
+        EOF
+        
+        echo "status=success" >> $GITHUB_OUTPUT
 
-- name: 上传到 release
-  uses: softprops/action-gh-release@master
-  if: steps.tag.outputs.status == 'success' && !cancelled()
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  with:
-    tag_name: ${{ steps.tag.outputs.release_tag }}
-    body_path: release.txt
-    files: |
-      ${{ env.PACKAGES_FILE }}
-      ${{ env.TARGETS_FILE }}
-      ${{ env.IMG_FILES }}
+    - name: 上传到release
+      uses: softprops/action-gh-release@master
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        body_path: release.txt
+        files: |
+          ${{ env.PACKAGES_FILE }}
+          ${{ env.TARGETS_FILE }}
+          ${{ env.IMG_FILES }}
 
     - name: 删除旧工作流
       uses: Mattraks/delete-workflow-runs@main
