@@ -119,7 +119,7 @@ jobs:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
-    - name: 整理和压缩文件
+- name: 整理和压缩文件
       id: organize
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
@@ -139,12 +139,24 @@ jobs:
         # 压缩 aarch64_generic 目录的内容到 app.tar.gz
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
         
-        # 压缩 armv8 目录下除 .img.gz 外的所有内容到 r3s.tar.gz
-        (cd bin/targets/rockchip/armv8 && tar -czf ../../../../r3s.tar.gz --exclude='*.img.gz' *)
+        # 处理 armv8 目录
+        cd bin/targets/rockchip/armv8
         
-        # 查找所有的 .img.gz 文件
-        IMG_FILES=$(find bin/targets/rockchip/armv8 -name "*.img.gz")
-        echo "IMG_FILES=$IMG_FILES" >> $GITHUB_ENV
+        # 移动固件镜像文件到上级目录
+        FIRMWARE_FILE="immortalwrt-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz"
+        if [ -f "$FIRMWARE_FILE" ]; then
+          mv "$FIRMWARE_FILE" ../../
+          echo "FIRMWARE_FILE=$PWD/../../$FIRMWARE_FILE" >> $GITHUB_ENV
+        else
+          echo "错误: 固件文件 $FIRMWARE_FILE 不存在"
+          exit 1
+        fi
+        
+        # 压缩剩余文件到 r3s.tar.gz
+        tar -czf ../../../../r3s.tar.gz *
+        
+        # 回到 openwrt 目录
+        cd ../../..
         
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
         echo "TARGETS_FILE=$PWD/r3s.tar.gz" >> $GITHUB_ENV
@@ -159,7 +171,7 @@ jobs:
         path: |
           ${{ env.PACKAGES_FILE }}
           ${{ env.TARGETS_FILE }}
-          ${{ env.IMG_FILES }}
+          ${{ env.FIRMWARE_FILE }}
 
     - name: 生成标签和信息
       id: tag
@@ -174,7 +186,7 @@ jobs:
         - 源码: ${{ env.REPO_URL }}
         - 分支: ${{ env.REPO_BRANCH }}
         - **app.tar.gz**: aarch64_generic架构软件包
-        - **r3s.tar.gz**: 除固件文件img.gz外相关文件
+        - **r3s.tar.gz**: 固件外的其他文件
         EOF
         
         echo "status=success" >> $GITHUB_OUTPUT
@@ -190,7 +202,7 @@ jobs:
         files: |
           ${{ env.PACKAGES_FILE }}
           ${{ env.TARGETS_FILE }}
-          ${{ env.IMG_FILES }}
+          ${{ env.FIRMWARE_FILE }}
 
     - name: 删除旧工作流
       uses: Mattraks/delete-workflow-runs@main
