@@ -23,8 +23,6 @@ env:
   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
-  UPLOAD_BIN_DIR: false
-  UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
@@ -109,19 +107,12 @@ jobs:
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: 检查磁盘空间
-      if: (!cancelled())
+      if: ${{ !cancelled() }}
       run: df -hT
-
-    - name: 上传 bin 目录
-      uses: actions/upload-artifact@main
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
-      with:
-        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: openwrt/bin
 
     - name: 整理和压缩文件
       id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      if: ${{ !cancelled() }}
       run: |
         cd openwrt
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
@@ -130,18 +121,9 @@ jobs:
         echo "FIRMWARE_DIR=$PWD/bin/targets/rockchip/armv8" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 上传压缩文件
-      uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      with:
-        name: OpenWrt_compressed${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: |
-          ${{ env.PACKAGES_FILE }}
-          ${{ env.FIRMWARE_DIR }}/*
-
     - name: 生成标签和信息
       id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: ${{ env.UPLOAD_RELEASE == 'true' && !cancelled() }}
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         cat > release.txt << 'EOF'
@@ -152,9 +134,9 @@ jobs:
         EOF
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 上传到 Release
+    - name: 上传到 release
       uses: softprops/action-gh-release@master
-      if: steps.tag.outputs.status == 'success' && !cancelled()
+      if: ${{ steps.tag.outputs.status == 'success' && !cancelled() }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
