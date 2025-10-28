@@ -127,7 +127,7 @@ jobs:
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
         (cd bin/targets/rockchip/armv8 && tar -czf packages.tar.gz packages && rm -rf packages)
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
-        echo "FIRMWARE_FILE=$PWD/bin/targets/rockchip/armv8" >> $GITHUB_ENV
+        echo "FIRMWARE_FILES=$PWD/bin/targets/rockchip/armv8/*" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传压缩文件
@@ -137,7 +137,7 @@ jobs:
         name: OpenWrt_compressed${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: |
           ${{ env.PACKAGES_FILE }}
-          ${{ env.FIRMWARE_FILE }}
+          ${{ env.FIRMWARE_FILES }}
 
     - name: 生成标签和信息
       id: tag
@@ -162,7 +162,7 @@ jobs:
         body_path: release.txt
         files: |
           ${{ env.PACKAGES_FILE }}
-          ${{ env.FIRMWARE_FILE }}
+          ${{ env.FIRMWARE_FILES }}
 
     - name: 删除旧工作流
       uses: Mattraks/delete-workflow-runs@main
