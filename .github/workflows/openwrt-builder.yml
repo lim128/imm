@@ -119,50 +119,50 @@ jobs:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
-- name: 整理和压缩文件
-  id: organize
-  if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-  run: |
-    cd openwrt
-    (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
-    (cd bin/targets/rockchip/armv8 && tar -czf packages.tar.gz packages && rm -rf packages)
-    echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
-    echo "FIRMWARE_DIR=$PWD/bin/targets/rockchip/armv8" >> $GITHUB_ENV
-    echo "status=success" >> $GITHUB_OUTPUT
+    - name: 整理和压缩文件
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt
+        (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
+        (cd bin/targets/rockchip/armv8 && tar -czf packages.tar.gz packages && rm -rf packages)
+        echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
+        echo "FIRMWARE_DIR=$PWD/bin/targets/rockchip/armv8" >> $GITHUB_ENV
+        echo "status=success" >> $GITHUB_OUTPUT
 
-- name: 上传压缩文件到 Artifact
-  uses: actions/upload-artifact@main
-  if: steps.organize.outputs.status == 'success' && !cancelled()
-  with:
-    name: OpenWrt_compressed${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-    path: |
-      ${{ env.PACKAGES_FILE }}
-      ${{ env.FIRMWARE_DIR }}/
+    - name: 上传压缩文件
+      uses: actions/upload-artifact@main
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_compressed${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: |
+          ${{ env.PACKAGES_FILE }}
+          ${{ env.FIRMWARE_DIR }}/*
 
-- name: 生成标签和信息
-  id: tag
-  if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-  run: |
-    echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-    cat > release.txt << 'EOF'
-    - 设备: r3s
-    - 源码: ${{ env.REPO_URL }}
-    - 分支: ${{ env.REPO_BRANCH }}
-    - **app.tar.gz**: aarch64_generic架构软件包
-    EOF
-    echo "status=success" >> $GITHUB_OUTPUT
+    - name: 生成标签和信息
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+        cat > release.txt << 'EOF'
+        - 设备: r3s
+        - 源码: ${{ env.REPO_URL }}
+        - 分支: ${{ env.REPO_BRANCH }}
+        - **app.tar.gz**: aarch64_generic架构软件包
+        EOF
+        echo "status=success" >> $GITHUB_OUTPUT
 
-- name: 上传到 Release
-  uses: softprops/action-gh-release@master
-  if: steps.tag.outputs.status == 'success' && !cancelled()
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  with:
-    tag_name: ${{ steps.tag.outputs.release_tag }}
-    body_path: release.txt
-    files: |
-      ${{ env.PACKAGES_FILE }}
-      ${{ env.FIRMWARE_DIR }}/*
+    - name: 上传到 Release
+      uses: softprops/action-gh-release@master
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        body_path: release.txt
+        files: |
+          ${{ env.PACKAGES_FILE }}
+          ${{ env.FIRMWARE_DIR }}/*
 
     - name: 删除旧工作流
       uses: Mattraks/delete-workflow-runs@main
