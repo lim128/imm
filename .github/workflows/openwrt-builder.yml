@@ -9,8 +9,6 @@ env:
   REPO_BRANCH: "openwrt-24.10"
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
-  DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part2.sh
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
@@ -53,12 +51,14 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-    - name: 加载自定义源
+    - name: 克隆软件包
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-        chmod +x $DIY_P1_SH
         cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P1_SH
+        git clone -b beta --single-branch https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
+        git clone -b v5 --single-branch https://github.com/sbwml/openwrt_helloworld.git package/helloworld && rm -rf package/helloworld/luci-app-homeproxy
+        git clone -b v5 --single-branch https://github.com/sbwml/luci-app-mosdns.git package/luci-app-mosdns
+        git clone -b main --single-branch https://github.com/sbwml/luci-app-openlist2.git package/luci-app-openlist2
 
     - name: 更新软件源
       run: cd openwrt && ./scripts/feeds update -a
@@ -66,14 +66,16 @@ jobs:
     - name: 安装软件源
       run: cd openwrt && ./scripts/feeds install -a
 
-    - name: 加载自定义配置
+    - name: 删除相关包
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_P2_SH
         cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P2_SH
-
+        sed -i 's/192.168.1.1/192.168.123.1/g' package/base-files/files/bin/config_generate
+        rm -rf feeds/{luci,packages}/{applications,lang,net}/{luci-app-openlist,luci-app-openclash,luci-app-passwall,luci-app-daed,golang,chinadns-ng,daed,dns2socks-rust,dns2socks,dns2tcp,geoview,hysteria,ipt2socks,lua-neturl,microsocks,mosdns,naiveproxy,nikki,openlist,pdnsd,redsocks2,shadow-tls,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,sing-box,tcping,trojan-plus,trojan,tuic-client,v2ray-core,v2ray-geodata,v2ray-plugin,xray-core,xray-plugin}
+        git clone -b 25.x --single-branch https://github.com/sbwml/packages_lang_golang.git feeds/packages/lang/golang
+        ./scripts/feeds update -a && ./scripts/feeds install -a
+        
     - name: 下载依赖包
       id: package
       run: |
