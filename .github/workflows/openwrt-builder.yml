@@ -98,7 +98,7 @@ jobs:
 
     - name: 整理和压缩文件
       id: organize
-      if: ${{ !cancelled() }}
+      if: ${{ steps.compile.outputs.status == 'success' && !cancelled() }}
       run: |
         df -hT $PWD
         cd openwrt
@@ -110,7 +110,7 @@ jobs:
 
     - name: 生成标签和信息
       id: tag
-      if: ${{ env.UPLOAD_RELEASE == 'true' && !cancelled() }}
+      if: ${{ steps.compile.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled() }}
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         cat > release.txt << 'EOF'
@@ -124,7 +124,7 @@ jobs:
 
     - name: 上传到 release
       uses: softprops/action-gh-release@master
-      if: ${{ steps.tag.outputs.status == 'success' && !cancelled() }}
+      if: ${{ steps.compile.outputs.status == 'success' && steps.tag.outputs.status == 'success' && !cancelled() }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -136,13 +136,14 @@ jobs:
 
     - name: 删除旧工作流
       uses: Mattraks/delete-workflow-runs@main
+      if: ${{ steps.compile.outputs.status == 'success' && !cancelled() }}
       with:
         retain_days: 0
         keep_minimum_runs: 1
 
     - name: 删除旧版本
       uses: dev-drprasad/delete-older-releases@master
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: ${{ steps.compile.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled() }}
       with:
         keep_latest: 2
         delete_tags: true
