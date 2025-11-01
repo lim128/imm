@@ -6,7 +6,6 @@ on:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: "v24.10.4"
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   UPLOAD_RELEASE: true
@@ -44,21 +43,32 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    - name: 克隆源代码
+    - name: 克隆源码
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        LATEST_TAG=$(git ls-remote --tags $REPO_URL "v24.10.*" | awk -F/ '{print $NF}' | sort -V | tail -n1)
+        if [ -z "$LATEST_TAG" ]; then
+          echo "Error: No tags matching 'v24.10.*' found!"
+          exit 1
+        fi
+        echo "最新v24.10标签: $LATEST_TAG"
+        git clone --depth 1 --single-branch --branch $LATEST_TAG --filter=blob:none $REPO_URL openwrt
+        cd openwrt
+        rm -rf .git/objects/pack/*.idx .git/objects/pack/*.pack
+        git fetch --no-tags --depth 1 origin $LATEST_TAG
+        git checkout $LATEST_TAG
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
     - name: 克隆软件包
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         cd openwrt
-        git clone -b beta --single-branch https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
-        git clone -b v5 --single-branch https://github.com/sbwml/openwrt_helloworld.git package/helloworld && rm -rf package/helloworld/luci-app-homeproxy
-        git clone -b v5 --single-branch https://github.com/sbwml/luci-app-mosdns.git package/luci-app-mosdns
-        git clone -b main --single-branch https://github.com/sbwml/luci-app-openlist2.git package/luci-app-openlist2
+        git clone --depth 1 -b beta --single-branch https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
+        git clone --depth 1 -b v5 --single-branch https://github.com/sbwml/openwrt_helloworld.git package/helloworld && rm -rf package/helloworld/luci-app-homeproxy
+        git clone --depth 1 -b v5 --single-branch https://github.com/sbwml/luci-app-mosdns.git package/luci-app-mosdns
+        git clone --depth 1 -b main --single-branch https://github.com/sbwml/luci-app-openlist2.git package/luci-app-openlist2
 
     - name: 更新软件源
       run: cd openwrt && ./scripts/feeds update -a
@@ -66,14 +76,14 @@ jobs:
     - name: 安装软件源
       run: cd openwrt && ./scripts/feeds install -a
 
-    - name: 整理相关文件
+    - name: 整理文件
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
         sed -i 's/192.168.1.1/192.168.123.1/g' package/base-files/files/bin/config_generate
         rm -rf feeds/{luci,packages}/{applications,lang,net}/{luci-app-openlist,luci-app-openclash,luci-app-passwall,luci-app-daed,golang,chinadns-ng,daed,dns2socks-rust,dns2socks,dns2tcp,geoview,hysteria,ipt2socks,lua-neturl,microsocks,mosdns,naiveproxy,nikki,openlist,pdnsd,redsocks2,shadow-tls,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,sing-box,tcping,trojan-plus,trojan,tuic-client,v2ray-core,v2ray-geodata,v2ray-plugin,xray-core,xray-plugin}
-        git clone -b 25.x --single-branch https://github.com/sbwml/packages_lang_golang.git feeds/packages/lang/golang
+        git clone --depth 1 -b 25.x --single-branch https://github.com/sbwml/packages_lang_golang.git feeds/packages/lang/golang
         ./scripts/feeds update -a && ./scripts/feeds install -a
         
     - name: 下载依赖包
@@ -104,6 +114,8 @@ jobs:
         cd openwrt
         (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
         (cd bin/targets/rockchip/armv8 && tar -czf packages.tar.gz packages && rm -rf packages)
+        # 清理编译产生的临时文件
+        rm -rf build_dir staging_dir
         echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
         echo "FIRMWARE_DIR=$PWD/bin/targets/rockchip/armv8" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
@@ -116,7 +128,7 @@ jobs:
         cat > release.txt << 'EOF'
         - 设备: r3s
         - 源码: ${{ env.REPO_URL }}
-        - 分支: ${{ env.REPO_BRANCH }}
+        - 标签: ${{ env.LATEST_TAG }}
         - **app.tar.gz**: aarch64_generic架构软件包
         - **packages.tar.gz**: 固件相关软件包
         EOF
