@@ -1,4 +1,4 @@
-name: OpenWrt Builder
+name: 固件编译器
 
 on:
   repository_dispatch:
