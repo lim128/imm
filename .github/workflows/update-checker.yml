@@ -16,7 +16,7 @@ jobs:
     - name: 获取最新标签
       id: getTag
       run: |
-        LATEST_TAG=$(git ls-remote --tags $REPO_URL "v24.10.*" | awk -F/ '{print $NF}' | sort -V | tail -n1)
+        LATEST_TAG=$(git ls-remote --tags $REPO_URL "v24.10.*" | awk -F/ '{print $NF}' | grep -v '\^{}' | sort -V | tail -n1)
         if [ -z "$LATEST_TAG" ]; then
           echo "错误：未找到匹配 'v24.10.*' 的标签！"
           exit 1
