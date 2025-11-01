@@ -118,7 +118,7 @@ jobs:
         cat > release.txt << 'EOF'
         - 设备: r3s
         - 源码: ${{ env.REPO_URL }}
-        - 分支: ${{ env.REPO_BRANCH }}
+        - 版本: ${{ env.REPO_BRANCH }}
         - **app.tar.gz**: aarch64_generic架构软件包
         - **packages.tar.gz**: 固件相关软件包
         EOF
