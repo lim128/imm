@@ -1,4 +1,4 @@
-name: 更新检查器
+name: Update Checker
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
