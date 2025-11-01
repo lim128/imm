@@ -48,18 +48,10 @@ jobs:
       run: |
         df -hT $PWD
         LATEST_TAG=$(git ls-remote --tags $REPO_URL "v24.10.*" | awk -F/ '{print $NF}' | sort -V | tail -n1)
-        if [ -z "$LATEST_TAG" ]; then
-          echo "Error: No tags matching 'v24.10.*' found!"
-          exit 1
-        fi
         echo "最新v24.10标签: $LATEST_TAG"
-        git clone --depth 1 --single-branch --branch openwrt-24.10 --filter=blob:none $REPO_URL openwrt
-        cd openwrt
-        git fetch --no-tags --depth 1 origin tag $LATEST_TAG
-        git checkout $LATEST_TAG
-        rm -rf .git/objects/pack/*.idx .git/objects/pack/*.pack
+        git clone $REPO_URL -b $LATEST_TAG openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-        echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+        echo "REPO_BRANCH=$LATEST_TAG" >> $GITHUB_ENV
 
     - name: 克隆软件包
       run: |
