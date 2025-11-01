@@ -1,20 +1,7 @@
-#
-# https://github.com/P3TERX/Actions-OpenWrt
-#
-# File: .github/workflows/update-checker.yml
-# Description: Source code update checker
-#
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
-#
-
-name: Update Checker
+name: 更新检查器
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: "openwrt-24.10"
 
 on:
   workflow_dispatch:
@@ -26,33 +13,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-    - name: Get Commit Hash
-      id: getHash
+    - name: 获取最新标签
+      id: getTag
       run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH .
-        echo "commitHash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        LATEST_TAG=$(git ls-remote --tags $REPO_URL "v24.10.*" | awk -F/ '{print $NF}' | sort -V | tail -n1)
+        if [ -z "$LATEST_TAG" ]; then
+          echo "错误：未找到匹配 'v24.10.*' 的标签！"
+          exit 1
+        fi
+        echo "最新v24.10标签: $LATEST_TAG"
+        echo "latestTag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
-    - name: Compare Commit Hash
-      id: cacheHash
+    - name: 比较标签
+      id: cacheTag
       uses: actions/cache@v3
       with:
-        path: .commitHash
-        key: commitHash_${{ steps.getHash.outputs.commitHash }}
+        path: .latestTag
+        key: latestTag_${{ steps.getTag.outputs.latestTag }}
 
-    - name: Save New Commit Hash
-      if: steps.cacheHash.outputs.cache-hit != 'true'
+    - name: 保存新标签
+      if: steps.cacheTag.outputs.cache-hit != 'true'
       run: |
-        echo ${{ steps.getHash.outputs.commitHash }} | tee .commitHash
+        echo ${{ steps.getTag.outputs.latestTag }} | tee .latestTag
+        echo "新标签检测到：${{ steps.getTag.outputs.latestTag }}，将触发编译"
 
-    - name: Trigger build
-      if: steps.cacheHash.outputs.cache-hit != 'true'
+    - name: 触发编译
+      if: steps.cacheTag.outputs.cache-hit != 'true'
       uses: peter-evans/repository-dispatch@v2
       with:
         token: ${{ github.token }}
         event-type: Source Code Update
 
-    - name: Delete workflow runs
+    - name: 删除旧工作流
       uses: Mattraks/delete-workflow-runs@v2
       with:
         retain_days: 0
