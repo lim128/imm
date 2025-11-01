@@ -66,10 +66,11 @@ jobs:
     - name: 安装软件源
       run: cd openwrt && ./scripts/feeds install -a
 
-    - name: 删除相关包
+    - name: 整理相关文件
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        [ -e kernel-6.6 ] && cp -f kernel-6.6 openwrt/include/kernel-6.6
         cd openwrt
         sed -i 's/192.168.1.1/192.168.123.1/g' package/base-files/files/bin/config_generate
         rm -rf feeds/{luci,packages}/{applications,lang,net}/{luci-app-openlist,luci-app-openclash,luci-app-passwall,luci-app-daed,golang,chinadns-ng,daed,dns2socks-rust,dns2socks,dns2tcp,geoview,hysteria,ipt2socks,lua-neturl,microsocks,mosdns,naiveproxy,nikki,openlist,pdnsd,redsocks2,shadow-tls,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,sing-box,tcping,trojan-plus,trojan,tuic-client,v2ray-core,v2ray-geodata,v2ray-plugin,xray-core,xray-plugin}
