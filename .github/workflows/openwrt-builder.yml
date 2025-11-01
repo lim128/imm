@@ -70,11 +70,11 @@ jobs:
         git clone --depth 1 -b v5 --single-branch https://github.com/sbwml/luci-app-mosdns.git package/luci-app-mosdns
         git clone --depth 1 -b main --single-branch https://github.com/sbwml/luci-app-openlist2.git package/luci-app-openlist2
 
-    - name: 更新软件源
-      run: cd openwrt && ./scripts/feeds update -a
-
-    - name: 安装软件源
-      run: cd openwrt && ./scripts/feeds install -a
+    - name: 配置软件源
+      run: |
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
 
     - name: 整理相关文件
       run: |
@@ -106,7 +106,7 @@ jobs:
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
-    - name: 整理文件
+    - name: 整理编译文件
       id: organize
       if: ${{ steps.compile.outputs.status == 'success' && !cancelled() }}
       run: |
