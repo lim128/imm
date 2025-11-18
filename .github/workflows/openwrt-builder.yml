@@ -160,7 +160,7 @@ jobs:
       if: ${{ steps.compile.outputs.status == 'success' && !cancelled() }}
       with:
         retain_days: 0
-        keep_minimum_runs: 1
+        keep_minimum_runs: 2
 
     - name: 删除旧版本
       uses: dev-drprasad/delete-older-releases@master
