@@ -6,7 +6,6 @@ on:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: "v24.10.4"
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
@@ -52,11 +51,27 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
+    - name: 获取最新tag
+      id: get_tag
+      run: |
+        LATEST_TAG=$(git ls-remote --tags ${{ env.REPO_URL }} | \
+                     grep 'refs/tags/v24\.10\.' | \
+                     sed 's|.*refs/tags/||' | \
+                     sed 's|\^{}||' | \
+                     sort -V | tail -n1)
+        if [ -z "$LATEST_TAG" ]; then
+          echo "错误：未找到任何 v24.10.x tag"
+          exit 1
+        fi
+        echo "找到最新的 v24.10.x tag: $LATEST_TAG"
+        echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_OUTPUT
+        echo "REPO_BRANCH=$LATEST_TAG" >> $GITHUB_ENV
+
     - name: 克隆源代码
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch --depth 1 --filter=blob:none $REPO_URL openwrt
+        git clone -b ${{ env.REPO_BRANCH }} --single-branch --depth 1 --filter=blob:none ${{ env.REPO_URL }} openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: 配置软件包
