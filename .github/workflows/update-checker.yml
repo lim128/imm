@@ -27,7 +27,7 @@ jobs:
 
     steps:
 
-    - name: 获取最新的 v24.10 系列 tag
+    - name: 获取最新tag
       id: get_latest_tag
       run: |
         # 使用 git 原生通配精确匹配 v24.10.* 系列 tag
