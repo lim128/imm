@@ -1,5 +1,4 @@
-name: Update Checker
-
+name: Update ImmortalWrt
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: "openwrt-24.10"
@@ -46,15 +45,10 @@ jobs:
 
     - name: 触发编译
       if: steps.cache_tag.outputs.cache-hit != 'true'
-      uses: peter-evans/repository-dispatch@v2
+      uses: peter-evans/repository-dispatch@v3
       with:
         token: ${{ github.token }}
-        event-type: Source Code Update
-        client-payload: |
-          {
-            "tag": "${{ steps.get_latest_tag.outputs.LATEST_TAG }}",
-            "triggered_by": "update-checker"
-          }
+        event-type: immortalwrt-24.10-build
 
     - name: 删除旧workflow
       uses: Mattraks/delete-workflow-runs@v2
