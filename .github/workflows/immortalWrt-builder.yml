@@ -140,8 +140,8 @@ jobs:
         EOF
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 上传到 release
-      uses: softprops/action-gh-release@master
+    - name: 上传到release
+      uses: softprops/action-gh-release@v2
       if: ${{ steps.compile.outputs.status == 'success' && steps.tag.outputs.status == 'success' && !cancelled() }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
