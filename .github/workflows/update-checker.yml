@@ -51,6 +51,11 @@ jobs:
       with:
         token: ${{ github.token }}
         event-type: immortalwrt-24.10-build
+        client-payload: |
+          {
+            "tag": "${{ steps.get_latest_tag.outputs.LATEST_TAG }}",
+            "triggered_by": "tag-update-checker"
+          }
 
     - name: 删除旧workflow
       uses: Mattraks/delete-workflow-runs@v2
