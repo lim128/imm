@@ -1,7 +1,8 @@
-name: OpenWrt Builder
+name: ImmortalWrt Builder
 
 on:
   repository_dispatch:
+    types: [immortalwrt-24.10-build]
   workflow_dispatch:
 
 env:
