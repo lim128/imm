@@ -50,7 +50,7 @@ jobs:
       uses: peter-evans/repository-dispatch@v3
       with:
         token: ${{ github.token }}
-        event-type: immortalwrt-build
+        event-type: ImmortalWrt Builder
         client-payload: |
           {
             "tag": "${{ steps.get_latest_tag.outputs.LATEST_TAG }}",
