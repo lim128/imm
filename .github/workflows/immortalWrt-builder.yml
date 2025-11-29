@@ -2,7 +2,7 @@ name: ImmortalWrt Builder
 
 on:
   repository_dispatch:
-    types: [immortalwrt-build]
+    types: [ImmortalWrt Builder]
   workflow_dispatch:
 
 env:
