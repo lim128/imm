@@ -2,7 +2,7 @@ name: Lienol Builder
 
 on:
   repository_dispatch:
-    types: [Lienol-build]
+    types: [lienol-build]
   workflow_dispatch:
 
 env:
