@@ -39,7 +39,11 @@ jobs:
       with:
         token: ${{ github.token }}
         event-type: lienol-build
-        client-payload: ${{ toJSON(steps.get_latest_tag.outputs) }}
+        client-payload: |
+          {
+            "tag": "${{ steps.get_latest_tag.outputs.LATEST_TAG }}",
+            "triggered_by": "tag-update-checker"
+          }
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@v2
