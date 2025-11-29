@@ -109,9 +109,7 @@ jobs:
       run: |
         df -hT $PWD
         cd openwrt
-        (cd bin/packages/aarch64_generic && tar -czf ../../../app.tar.gz *)
-        (cd bin/targets/rockchip/armv8 && tar -czf packages.tar.gz packages && rm -rf packages)
-        echo "PACKAGES_FILE=$PWD/app.tar.gz" >> $GITHUB_ENV
+        (cd bin/targets/rockchip/armv8 && rm -rf packages)
         echo "FIRMWARE_DIR=$PWD/bin/targets/rockchip/armv8" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -124,8 +122,6 @@ jobs:
         - 设备: r3s
         - 源码: ${{ env.REPO_URL }}
         - 版本: ${{ env.REPO_BRANCH }}
-        - **app.tar.gz**: aarch64_generic架构软件包
-        - **packages.tar.gz**: 固件相关软件包
         EOF
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -138,7 +134,6 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: |
-          ${{ env.PACKAGES_FILE }}
           ${{ env.FIRMWARE_DIR }}/*
 
     - name: 删除旧工作流
