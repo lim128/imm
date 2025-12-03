@@ -1,8 +1,8 @@
-name: ImmortalWrt Builder
+name: Builder
 
 on:
   repository_dispatch:
-    types: [ImmortalWrt Builder]
+    types: [Builder]
   workflow_dispatch:
 
 env:
