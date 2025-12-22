@@ -1,7 +1,7 @@
 name: Checker
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: "openwrt-24.10"
+  REPO_BRANCH: "openwrt-25.12"
 
 on:
   workflow_dispatch:
@@ -19,17 +19,17 @@ jobs:
     - name: 获取最新tag
       id: get_latest_tag
       run: |
-        # 使用 git 原生通配精确匹配 v24.10.* 系列 tag
-        LATEST_TAG=$(git ls-remote --tags --refs ${{ env.REPO_URL }} 'refs/tags/v24.10.*' | \
+        # 使用 git 原生通配精确匹配 v25.12.* 系列 tag
+        LATEST_TAG=$(git ls-remote --tags --refs ${{ env.REPO_URL }} 'refs/tags/v25.12.*' | \
                      cut -f2 | \
                      sed 's|^refs/tags/||' | \
                      sort -V | \
                      tail -n1)
         if [ -z "$LATEST_TAG" ]; then
-          echo "【错误】未在 immortalwrt 仓库找到任何 v24.10 系列 tag！"
+          echo "【错误】未在 immortalwrt 仓库找到任何 v25.12 系列 tag！"
           exit 1
         fi
-        echo "当前官方最新的 v24.10 系列 tag 为: $LATEST_TAG"
+        echo "当前官方最新的 v25.12 系列 tag 为: $LATEST_TAG"
         echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_OUTPUT
 
     - name: 读取历史tag
